@@ -4,6 +4,7 @@
   "description": "1. `npm init` --> Um Projekt zu intitalisieren",
   "main": "index.js",
   "scripts": {
+    "start": "PORT=3000 node index.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon -r dotenv/config index.js"
   },
