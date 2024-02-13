@@ -4,9 +4,9 @@ import axios from "axios";
 function Usuario() {
   const [userData, setUserData] = useState(null);
   const [todos, setTodos] = useState([]);
+  const [newTodo, setNewTodo] = useState("");
 
   useEffect(() => {
-    // Realizar la solicitud GET al servidor Express para obtener los datos del usuario
     axios
       .get("http://localhost:5050/user")
       .then((response) => {
@@ -16,7 +16,6 @@ function Usuario() {
         console.error("Error fetching user data:", error);
       });
 
-    // Realizar la solicitud GET al servidor Express para obtener la lista de todos
     axios
       .get("http://localhost:5050/todos")
       .then((response) => {
@@ -26,6 +25,29 @@ function Usuario() {
         console.error("Error fetching todos:", error);
       });
   }, []);
+
+  const handleNewTodoChange = (event) => {
+    setNewTodo(event.target.value);
+  };
+
+  const handleNewTodoSubmit = () => {
+    if (newTodo === null) {
+      return; // No hacer nada si newTodo es null
+    }
+
+    axios
+      .post("http://localhost:5050/todos", {
+        tarea: newTodo,
+        completado: false,
+      })
+      .then((response) => {
+        setTodos([...todos, response.data]);
+        setNewTodo("");
+      })
+      .catch((error) => {
+        console.error("Error creating new todo:", error);
+      });
+  };
 
   return (
     <div>
@@ -47,6 +69,9 @@ function Usuario() {
           </li>
         ))}
       </ul>
+
+      <input type="text" value={newTodo} onChange={handleNewTodoChange} />
+      <button onClick={handleNewTodoSubmit}>Agregar Tarea</button>
     </div>
   );
 }
