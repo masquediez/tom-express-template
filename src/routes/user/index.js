@@ -24,15 +24,13 @@ const UserRouter = Router();
 // Obtener perfil de un usuario específico
 UserRouter.get("/profile", (req, res) => {
   const userId = parseInt(req.query.userId);
-  if (!userId || isNaN(userId)) {
-    res
-      .status(StatusCodes.BAD_REQUEST)
-      .json({ error: ReasonPhrases.BAD_REQUEST });
+  if (!userId) {
+    res.status(StatusCodes.BAD_REQUEST).send(ReasonPhrases.BAD_REQUEST);
     return;
   }
   const userProfile = profiles.find((item) => item.id === userId);
   if (!userProfile) {
-    res.status(StatusCodes.NOT_FOUND).json({ error: ReasonPhrases.NOT_FOUND });
+    res.status(StatusCodes.NOT_FOUND).send(ReasonPhrases.NOT_FOUND);
     return;
   }
   res.status(StatusCodes.OK).json({ profile: userProfile });
