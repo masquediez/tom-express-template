@@ -40,13 +40,6 @@ UserRouter.get("/profile", (req, res) => {
 UserRouter.put("/profile/update", (req, res) => {
   const { username, userId } = req.body;
 
-  if (!username || !userId || isNaN(userId)) {
-    res
-      .status(StatusCodes.BAD_REQUEST)
-      .json({ error: ReasonPhrases.BAD_REQUEST });
-    return;
-  }
-
   const currentUser = profiles.find((item) => item.id === userId);
   if (!currentUser) {
     res.status(StatusCodes.NOT_FOUND).json({ error: ReasonPhrases.NOT_FOUND });
@@ -61,7 +54,7 @@ UserRouter.put("/profile/update", (req, res) => {
 UserRouter.delete("/profile", (req, res) => {
   const { userId } = req.body;
 
-  if (!userId || isNaN(userId)) {
+  if (!userId) {
     res
       .status(StatusCodes.BAD_REQUEST)
       .json({ error: ReasonPhrases.BAD_REQUEST });
