@@ -89,7 +89,21 @@ TodosRouter.post("/todo", (req, res) => {
 
 // PUT REQUESTS
 TodosRouter.put("/mark", (req, res) => {
-  res.status(StatusCodes.OK).send("Todo als erledeigt markieren");
+  const { id, newIsDone } = req.body;
+  const todo = todo.find((item) => item.id == id);
+  todo.isDone = newIsDone;
+
+  // Todo rauslöschen
+  const newTodos = todos.filter((item) => item.id != id);
+
+  newTodos.push(todo);
+  todos = newTodo;
+
+  //const myArray = ["Apfel", ]
+
+  // const id = req.body.id
+  // const isDone = req.body.isDone
+  res.status(StatusCodes.OK).json({ uppdatetodo: { id, isDone } });
 });
 TodosRouter.put("/update", (req, res) => {
   res.status(StatusCodes.OK).send("Todo aktuallisieren");
