@@ -1,9 +1,11 @@
 const { Router } = require("express");
 const { StatusCodes, ReasonPhrases } = require("http-status-codes");
+const todoSequelize = require("../../database/setup/database");
+const TodoModel = require("../../database/models/TodoModel");
 
 const TodosRouter = Router();
 
-const todos = [
+let todos = [
   {
     id: 1,
     userId: 1,
@@ -35,16 +37,20 @@ const todos = [
 ];
 
 // GET REQUESTS
-// /v1/todos/byid
+// /v1/todos/bytodoid
 TodosRouter.get("/byid", (req, res) => {
   const todoId = req.query.todoId;
   if (!todoId) {
     res.status(StatusCodes.BAD_REQUEST).send(ReasonPhrases.BAD_REQUEST);
     return;
   }
-  res.status(StatusCodes.OK).send("Get Todo by id");
+  const todo = todos.find((item) => item.id == todoId);
+  // 1 == '1' --> true
+  // 1 === '1' --> false
+  res.status(StatusCodes.OK).json({ todo: todo });
 });
 
+// Alle Todos von einer UserId
 TodosRouter.get("/byuserid", (req, res) => {
   // const userId = req.body.userId;
   // const userId = parseInt(req.query.userId);
@@ -64,75 +70,81 @@ TodosRouter.get("/byuserid", (req, res) => {
   // res.status(StatusCodes.OK).send(JSON.stringify(userTodos)); //alternativ
 });
 
-// GET REQUESTS
 TodosRouter.get("/all", (req, res) => {
-  res.status(StatusCodes.OK).json(todos);
-});
-
-// POST REQUESTS
-TodosRouter.post("/todo", (req, res) => {
-  const { userId, task, isDone, dueDate } = req.body;
-
-  if (!userId || !task || typeof isDone !== "boolean" || !dueDate) {
-    res.status(StatusCodes.BAD_REQUEST).send(ReasonPhrases.BAD_REQUEST);
-    return;
-  }
-
-  const newTodo = {
-    id: todos.length + 1,
-    userId,
-    task,
-    isDone,
-    dueDate: new Date(dueDate),
-  };
+  res.status(StatusCodes.OK).send(todos);
 });
 
 // PUT REQUESTS
 TodosRouter.put("/mark", (req, res) => {
   const { id, newIsDone } = req.body;
-  const todo = todo.find((item) => item.id == id);
+
+  const todo = todos.find((item) => item.id == id);
+
+  // setzt das zuvor definierte todo auf den neuen isDone WErt
   todo.isDone = newIsDone;
 
   // Todo rauslöschen
   const newTodos = todos.filter((item) => item.id != id);
 
+  // Geupdatete Todo wieder hinzufügen
   newTodos.push(todo);
-  todos = newTodo;
 
-  //const myArray = ["Apfel", ]
+  todos = newTodos;
 
-  // const id = req.body.id
-  // const isDone = req.body.isDone
-  res.status(StatusCodes.OK).json({ uppdatetodo: { id, isDone } });
+  res.status(StatusCodes.OK).json({ updatedTodo: todo });
 });
+
 TodosRouter.put("/update", (req, res) => {
-  res.status(StatusCodes.OK).send("Todo aktuallisieren");
+  const { todoId, newTask, newIsDone, newDueDate } = req.body;
+
+  const todo = todos.find((todo) => todo.id == todoId);
+
+  // wir überschreiben bestimmte Werte des Todos
+  todo.task = newTask;
+  todo.isDone = newIsDone;
+  todo.dueDate = new Date(newDueDate);
+
+  // // Todo rauslöschen
+  // const newTodos = todos.filter((todo) => todo.id != todoId);
+
+  // // Geupdatete Todo wieder hinzufügen
+  // newTodos.push(todo);
+
+  // todos = newTodos;
+
+  console.log(todos);
+
+  res.status(StatusCodes.OK).json({ updatedTodo: todo });
 });
 
 // POST REQUESTS
-TodosRouter.post("/create", (req, res) => {
-  res.status(StatusCodes.OK).send("Erstellen eines Todos");
+TodosRouter.post("/create", async (req, res) => {
+  const { newTask, newIsDone, newDueDate, newUserId } = req.body;
+
+  const newTodo = {
+    task: newTask,
+    isDone: newIsDone,
+    dueDate: new Date(newDueDate),
+    userId: newUserId,
+  };
+
+  const todo = await TodoModel.create(newTodo);
+
+  // todos.push(newTodo);
+
+  res.status(StatusCodes.OK).json({ todo });
 });
 
 // DELETE REQUEST
 TodosRouter.delete("/delete", (req, res) => {
-  res.status(StatusCodes.OK).send("DELTE Todo");
-});
+  const { todoId } = req.body; //req.body.todoId
 
-// New Routes for Members
-// Add member to a Todo
-TodosRouter.post("/members/add", (req, res) => {
-  res.status(StatusCodes.OK).send("Add member to a Todo");
-});
+  console.log("MY BODY", req.body);
+  const newTodosArray = todos.filter((item) => item.id != todoId);
 
-// Remove member from a Todo
-TodosRouter.delete("/members/remove", (req, res) => {
-  res.status(StatusCodes.OK).send("Remove member from a Todo");
-});
-
-// Get members of a Todo
-TodosRouter.get("/members/list", (req, res) => {
-  res.status(StatusCodes.OK).send("Get members of a Todo");
+  console.log("NEW TODOS", newTodosArray);
+  todos = newTodosArray;
+  res.status(StatusCodes.OK).json({ deletedTodosId: todoId });
 });
 
 module.exports = { TodosRouter };

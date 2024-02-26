@@ -1,124 +1,84 @@
 const { Router } = require("express");
 const { StatusCodes, ReasonPhrases } = require("http-status-codes");
 
-// Simulación de base de datos de perfiles de usuario
+// Datenbank simulieren
 let profiles = [
   {
     id: 1,
     firstName: "Max",
+    username: "julihihi",
     name: "Mustermann",
     birthDate: new Date("1990-10-10"),
-    members: [], // Array para almacenar los IDs de los miembros asociados al usuario
   },
   {
     id: 2,
     firstName: "Nina",
     name: "Mustermann",
     birthDate: new Date("1980-10-10"),
-    members: [],
   },
 ];
 
 const UserRouter = Router();
 
-// Obtener perfil de un usuario específico
+//  ***GET REQUESTS***
+//Return all profiles
+UserRouter.get("/profile/all", (req, res) => {
+  res.status(StatusCodes.OK).json(profiles);
+});
+
+// Return profile from a specific user
 UserRouter.get("/profile", (req, res) => {
   const userId = parseInt(req.query.userId);
   if (!userId) {
     res.status(StatusCodes.BAD_REQUEST).send(ReasonPhrases.BAD_REQUEST);
     return;
   }
-  const userProfile = profiles.find((item) => item.id === userId);
-  if (!userProfile) {
-    res.status(StatusCodes.NOT_FOUND).send(ReasonPhrases.NOT_FOUND);
-    return;
-  }
+  const userProfile = profiles.find((profile) => profile.id === userId);
   res.status(StatusCodes.OK).json({ profile: userProfile });
 });
 
-// Actualizar perfil de usuario
+//  ***PUT REQUESTS***
 UserRouter.put("/profile/update", (req, res) => {
+  // req.body = {
+  //   userId: 2,
+  //   username: "Franz",
+  // };
+
+  // const username = req.body.username;
+  // const userId = req.body.userId;
+
+  // wir holen Input aus dem Request heraus
   const { username, userId } = req.body;
 
-  const currentUser = profiles.find((item) => item.id === userId);
-  if (!currentUser) {
-    res.status(StatusCodes.NOT_FOUND).json({ error: ReasonPhrases.NOT_FOUND });
-    return;
-  }
+  if (!userId || !username) {
+    res.status(StatusCodes.BAD_REQUEST).send("userID oder username fehlt");
+  } else {
+    // finde das Profil mit passender ID
+    const currentUser = profiles.find((item) => item.id === userId);
+    // aktualisiere Profil-username
+    currentUser.username = username;
 
-  currentUser.username = username;
-  res.status(StatusCodes.OK).json({ updatedProfile: currentUser });
+    // hole alle anderen Profile aus der Datenbank
+    const newProfiles = profiles.filter((item) => item.id !== userId);
+    // füge das bearbeitete Profil diesem Array hinzu
+    newProfiles.push(currentUser);
+    // => aktualisierten Array der gesamten Datenbank
+
+    // Datenbank durch aktualisierte Version ersetzen
+    profiles = newProfiles;
+
+    res.statusCode(StatusCodes.OK).json({ updatedProfile: currentUser });
+  }
 });
 
-// Eliminar perfil de usuario
+//  ***DELETE REQUESTS***
 UserRouter.delete("/profile", (req, res) => {
   const { userId } = req.body;
 
-  if (!userId) {
-    res
-      .status(StatusCodes.BAD_REQUEST)
-      .json({ error: ReasonPhrases.BAD_REQUEST });
-    return;
-  }
+  const deletedProfiles = profiles.filter((item) => item.id !== userId);
+  profiles = deletedProfiles;
 
-  const index = profiles.findIndex((item) => item.id === userId);
-  if (index === -1) {
-    res.status(StatusCodes.NOT_FOUND).json({ error: ReasonPhrases.NOT_FOUND });
-    return;
-  }
-
-  profiles.splice(index, 1);
-  res.status(StatusCodes.OK).json({ deletedUserId: userId });
-});
-
-// Rutas para gestionar miembros de usuario
-// Agregar miembro a un usuario
-UserRouter.post("/add/member", (req, res) => {
-  const { userId, memberId } = req.body;
-
-  const currentUser = profiles.find((item) => item.id === userId);
-  if (!currentUser) {
-    res.status(StatusCodes.NOT_FOUND).json({ error: ReasonPhrases.NOT_FOUND });
-    return;
-  }
-
-  // Verificar si el memberId ya está asociado al usuario
-  if (currentUser.members.includes(memberId)) {
-    return res
-      .status(StatusCodes.BAD_REQUEST)
-      .json({ error: "El miembro ya está asociado a este usuario." });
-  }
-
-  // Agregar el memberId al usuario
-  currentUser.members.push(memberId);
-  res
-    .status(StatusCodes.OK)
-    .json({ message: "Miembro agregado exitosamente al usuario." });
-});
-
-// Eliminar miembro de un usuario
-UserRouter.delete("/remove/member", (req, res) => {
-  const { userId, memberId } = req.body;
-
-  const currentUser = profiles.find((item) => item.id === userId);
-  if (!currentUser) {
-    res.status(StatusCodes.NOT_FOUND).json({ error: ReasonPhrases.NOT_FOUND });
-    return;
-  }
-
-  // Verificar si el memberId está asociado al usuario
-  const memberIndex = currentUser.members.indexOf(memberId);
-  if (memberIndex === -1) {
-    return res
-      .status(StatusCodes.BAD_REQUEST)
-      .json({ error: "El miembro no está asociado a este usuario." });
-  }
-
-  // Eliminar el memberId del usuario
-  currentUser.members.splice(memberIndex, 1);
-  res
-    .status(StatusCodes.OK)
-    .json({ message: "Miembro eliminado exitosamente del usuario." });
+  res.json({ deletedUserId: userId });
 });
 
 module.exports = { UserRouter };
